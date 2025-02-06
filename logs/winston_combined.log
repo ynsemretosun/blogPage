@@ -1,0 +1,19 @@
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":{"_csrf":"LSeZihWq-tdLhhVrrswCUq-QiMd4UkzuwKVo","author":"Author","content":"Content","header":"Header","tags":"tags"}}
+{"level":"info","message":"Dolu gövde alındı."}
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":{"_csrf":"vEebjMIr-rW4DzwPI38gsi4SfjScH8x3Ic9Y","author":"Hamit Mızrak","content":"Content","header":"Header","tags":"node,java"}}
+{"level":"info","message":"Dolu gövde alındı."}
+{"level":"info","message":{"_csrf":"vEebjMIr-rW4DzwPI38gsi4SfjScH8x3Ic9Y","author":"Hamit Mızrak","content":"Content","header":"Header","tags":"node,java"}}
+{"level":"info","message":"Dolu gövde alındı."}
+{"level":"info","message":"Sunucu 1111 portunda çalışıyor http://localhost:1111"}
+{"level":"info","message":{"_csrf":"vEebjMIr-rW4DzwPI38gsi4SfjScH8x3Ic9Y","author":"Hamit Mızrak","content":"Content","header":"Header","tags":"node,java"}}
+{"level":"info","message":"Dolu gövde alındı."}
+{"author":"Hamit Mızrak","content":"Content","header":"Header","level":"info","message":"Blog başarıyla kaydedildi:","tags":"node,java"}
+{"level":"info","message":{"_csrf":"wkwvE8ba-Umtm8ejuTKzW39Icrp70JWBmG-w","author":"Hamit Mızrak","content":"Content2","header":"Header2","tags":"node,java2"}}
+{"level":"info","message":"Dolu gövde alındı."}
+{"author":"Hamit Mızrak","content":"Content2","header":"Header2","level":"info","message":"Blog başarıyla kaydedildi:","tags":"node,java2"}
