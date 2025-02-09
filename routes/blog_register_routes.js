@@ -44,10 +44,9 @@ const MongooseregisterModelApi = require("../models/mongoose_blog_register_model
 
 // DRY Principle (Don't Repeat Yourself)
 const handleError = (err, response, message) => {
-    console.error(err);
-    response.status(400).json({message});
+  console.error(err);
+  response.status(400).json({ message });
 }; //end handleError
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CREATE register
@@ -56,27 +55,31 @@ const handleError = (err, response, message) => {
 // http://localhost:1111
 
 router.post("/", async (request, response) => {
-    // Mongoose register Model Verileri Almak
-    const create = new MongooseregisterModelApi({
-        username: request.body.header,
-        password: request.body.content,
-        email: request.body.author,
-    }); //end create
+  // Mongoose register Model Verileri Almak
+  const create = new MongooseregisterModelApi({
+    username: request.body.header,
+    password: request.body.content,
+    email: request.body.author,
+  }); //end create
 
-    // Mongoose register Modelda Alınan Verileri Gönder
-    try {
-        // MongoDB'ye kaydet
-        await create.save();
+  // Mongoose register Modelda Alınan Verileri Gönder
+  try {
+    // MongoDB'ye kaydet
+    await create.save();
 
-        // Başarılı durumda status(200) döndüğünde
-        response.status(200).json(create);
+    // Başarılı durumda status(200) döndüğünde
+    response.status(200).json(create);
 
-        // Ekleme başarılı
-        console.warn("Ekleme Başarılı");
-        console.warn(create);
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Ekleme Sırasında Hata Meydana geldi");
-    } //end catch
+    // Ekleme başarılı
+    console.warn("Ekleme Başarılı");
+    console.warn(create);
+  } catch (err) {
+    handleError(
+      err,
+      response,
+      "MongoDB'de Ekleme Sırasında Hata Meydana geldi"
+    );
+  } //end catch
 }); //end create => post
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,39 +87,50 @@ router.post("/", async (request, response) => {
 // GET isteği ile mongodb üzerinden bütün verileri alacağız.
 // http://localhost:1111
 router.get("/", async (request, response) => {
-    try {
-        // MongoDB üzerinden get isteği attık
-        const find = await MongooseregisterModelApi.find();
+  try {
+    // MongoDB üzerinden get isteği attık
+    const find = await MongooseregisterModelApi.find();
 
-        // Tarihi Bizim istediğimiz şekilde yazalım.
-        const formattedDateTurkish = await Promise.all(find.map(async (temp) => {
-            // Görüntüleme sayısını artırma
-            await temp.incrementViews();
+    // Tarihi Bizim istediğimiz şekilde yazalım.
+    const formattedDateTurkish = await Promise.all(
+      find.map(async (temp) => {
+        // Görüntüleme sayısını artırma
+        await temp.incrementViews();
 
-            return {
-                ...temp._doc, // Tüm register verilerini kopyala
-                dateInformation: new Date(temp.createdAt).toLocaleString("tr-TR", {
-                    year: "numeric", month: "long", day: "numeric", year: "numeric", hour: "2-digit", second: "2-digit",
-                }), //end createdAt
-            }; //end return
-        })); //end formattedDateTurkish
+        return {
+          ...temp._doc, // Tüm register verilerini kopyala
+          dateInformation: new Date(temp.createdAt).toLocaleString("tr-TR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            second: "2-digit",
+          }), //end createdAt
+        }; //end return
+      })
+    ); //end formattedDateTurkish
 
-        // Her register sayfasına bakıldıkça sayacçı 1 artır
-        // const viewCounter = await Promise.all(
-        //   find.map(async (register) => {
-        //     await register.incrementViews(); // Görüntüleme sayısını artır
-        //     return register;
-        //   }) // end map
-        // ); //end viewCounter
-        // Dönüş değeri
+    // Her register sayfasına bakıldıkça sayacçı 1 artır
+    // const viewCounter = await Promise.all(
+    //   find.map(async (register) => {
+    //     await register.incrementViews(); // Görüntüleme sayısını artır
+    //     return register;
+    //   }) // end map
+    // ); //end viewCounter
+    // Dönüş değeri
 
-        response.status(200).json(formattedDateTurkish);
+    response.status(200).json(formattedDateTurkish);
 
-        // Listeleme başarılı
-        console.log("Listeleme Başarılı");
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Listeleme Sırasında Hata Meydana geldi");
-    } //end catch
+    // Listeleme başarılı
+    console.log("Listeleme Başarılı");
+  } catch (err) {
+    handleError(
+      err,
+      response,
+      "MongoDB'de Listeleme Sırasında Hata Meydana geldi"
+    );
+  } //end catch
 }); //end list => get
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,19 +138,27 @@ router.get("/", async (request, response) => {
 // PUT isteği ile mongodb üzerinden veri güncelleyeceğiz.
 // NOT: delete ve update işlemlerinde ID kullanılır.
 router.put("/:id", async (request, response) => {
-    try {
-        // MongoDB üzerinden id ile istek attık
-        const update = await MongooseregisterModelApi.findByIdAndUpdate(// ID almak
-            request.params.id, request.body, {new: true}); //end update
+  try {
+    // MongoDB üzerinden id ile istek attık
+    const update = await MongooseregisterModelApi.findByIdAndUpdate(
+      // ID almak
+      request.params.id,
+      request.body,
+      { new: true }
+    ); //end update
 
-        // Dönüş değeri
-        response.status(200).json(update);
+    // Dönüş değeri
+    response.status(200).json(update);
 
-        // Güncelleme başarılı
-        console.log("Güncelleme Başarılı");
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Güncelleme Sırasında Hata Meydana geldi");
-    } //end catch
+    // Güncelleme başarılı
+    console.log("Güncelleme Başarılı");
+  } catch (err) {
+    handleError(
+      err,
+      response,
+      "MongoDB'de Güncelleme Sırasında Hata Meydana geldi"
+    );
+  } //end catch
 }); //end update => put
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,22 +167,22 @@ router.put("/:id", async (request, response) => {
 // http://localhost:1111/1
 
 router.delete("/:id", async (request, response) => {
-    try {
-        // İlgili ID'i bul
-        const id = request.params.id;
-        console.log(id);
+  try {
+    // İlgili ID'i bul
+    const id = request.params.id;
+    console.log(id);
 
-        const deleteFindId = await MongooseregisterModelApi.findByIdAndDelete(id);
-        console.log(deleteFindId);
+    const deleteFindId = await MongooseregisterModelApi.findByIdAndDelete(id);
+    console.log(deleteFindId);
 
-        // Dönüş değeri
-        response.status(200).json({message: `${id} nolu id silindi`});
+    // Dönüş değeri
+    response.status(200).json({ message: `${id} nolu id silindi` });
 
-        // Listeleme başarılı
-        console.log("Listeleme Başarılı");
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Silme Sırasında Hata Meydana geldi");
-    } //end catch
+    // Listeleme başarılı
+    console.log("Listeleme Başarılı");
+  } catch (err) {
+    handleError(err, response, "MongoDB'de Silme Sırasında Hata Meydana geldi");
+  } //end catch
 }); //end list => get
 
 /////////////////////////////////////////////////////////////

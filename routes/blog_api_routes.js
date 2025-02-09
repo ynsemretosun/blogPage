@@ -44,125 +44,198 @@ const MongooseBlogModelApi = require("../models/mongoose_blog_models");
 
 // DRY Principle (Don't Repeat Yourself)
 const handleError = (err, response, message) => {
-    console.error(err);
-    response.status(400).json({message});
+  console.error(err);
+  response.status(400).json({ message });
 }; //end handleError
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CREATE BLOG
 // POST isteği ile yeni bir blog datası oluşturuyoruz.
 // Gönderilen bu veriyi almak için request.body ile içeri aktarmış olacağız.
 // http://localhost:1111
+const { promisify } = require("util");
+const catchAsync = require("../utils/catchAsync");
+const { verify } = require("jsonwebtoken");
+const User = require("../models/userModel");
+const AppError = require("../utils/appError");
+const protect = catchAsync(async (req, res, next) => {
+  //Getting token and check its there
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
 
-router.post("/", async (request, response) => {
-    // Mongoose Blog Model Verileri Almak
-    const create = new MongooseBlogModelApi({
-        header: request.body.header,
-        content: request.body.content,
-        author: request.body.author,
-        tags: request.body.tags,
-    }); //end create
+  if (!token) {
+    return next(
+      new AppError("Lütfen giriş yaptıktan sonra tekrar deneyiniz!", 401)
+    );
+  }
+  //Validate token
+  const decoded = await promisify(verify)(token, process.env.JWT_SECRET);
+  //Check user still exist
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser)
+    return next(new AppError("Bu tokene sahip kullanıcı mevcut değil!", 401));
 
-    // Mongoose Blog Modelda Alınan Verileri Gönder
-    try {
-        // MongoDB'ye kaydet
-        await create.save();
+  req.user = currentUser;
+  next();
+});
 
-        // Başarılı durumda status(200) döndüğünde
-        response.status(200).json(create);
+router.post(
+  "/",
+  protect,
+  catchAsync(async (request, response, next) => {
+    const { header, content, tags, imageUrl } = request.body;
+    console.log(header, content, tags);
+    if (!header || !content || !tags) {
+      return next(new AppError("Lütfen tüm alanları doldurunuz!", 400));
+    }
 
-        // Ekleme başarılı
-        console.warn("Ekleme Başarılı");
-        console.warn(create);
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Ekleme Sırasında Hata Meydana geldi");
-    } //end catch
-}); //end create => post
+    const newBlog = await MongooseBlogModelApi.create({
+      header,
+      content,
+      author: request.user.username,
+      tags,
+      imageUrl,
+    });
+
+    response.status(201).json({
+      status: "success",
+      message: "Blog başarıyla oluşturuldu!",
+      data: {
+        blog: newBlog,
+      },
+    });
+  })
+);
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // LIST BLOG
 // GET isteği ile mongodb üzerinden bütün verileri alacağız.
 // http://localhost:1111
-router.get("/", async (request, response) => {
-    try {
-        // MongoDB üzerinden get isteği attık
-        const find = await MongooseBlogModelApi.find();
+router.get(
+  "/",
+  catchAsync(async (req, res) => {
+    //limiter ekle
 
-        // Tarihi Bizim istediğimiz şekilde yazalım.
-        const formattedDateTurkish = await Promise.all(find.map(async (temp) => {
-            // Görüntüleme sayısını artırma
-            await temp.incrementViews();
+    const blogs = await MongooseBlogModelApi.find({ status: "published" })
+      .sort({
+        createdAt: -1,
+      })
+      .limit(10);
 
-            return {
-                ...temp._doc, // Tüm blog verilerini kopyala
-                dateInformation: new Date(temp.createdAt).toLocaleString("tr-TR", {
-                    year: "numeric", month: "long", day: "numeric", year: "numeric", hour: "2-digit", second: "2-digit",
-                }), //end createdAt
-            }; //end return
-        })); //end formattedDateTurkish
+    res.status(200).json({
+      status: "success",
+      results: blogs.length,
+      data: {
+        blogs,
+      },
+    });
+  })
+); //end list => get
 
-        // Her blog sayfasına bakıldıkça sayacçı 1 artır
-        // const viewCounter = await Promise.all(
-        //   find.map(async (blog) => {
-        //     await blog.incrementViews(); // Görüntüleme sayısını artır
-        //     return blog;
-        //   }) // end map
-        // ); //end viewCounter
-        // Dönüş değeri
+router.get(
+  "/protected",
+  protect,
+  catchAsync(async (req, res) => {
+    const role = req.user.role;
+    console.log(role);
+    let blogs = [];
+    if (role !== "admin") {
+      blogs = await MongooseBlogModelApi.find({ author: req.user.username });
+    } else {
+      blogs = await MongooseBlogModelApi.find();
+    }
 
-        response.status(200).json(formattedDateTurkish);
-
-        // Listeleme başarılı
-        console.log("Listeleme Başarılı");
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Listeleme Sırasında Hata Meydana geldi");
-    } //end catch
-}); //end list => get
+    res.status(200).json({
+      status: "success",
+      results: blogs.length,
+      data: {
+        blogs,
+      },
+    });
+  })
+);
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // UPDATE BLOG
 // PUT isteği ile mongodb üzerinden veri güncelleyeceğiz.
 // NOT: delete ve update işlemlerinde ID kullanılır.
-router.put("/:id", async (request, response) => {
-    try {
-        // MongoDB üzerinden id ile istek attık
-        const update = await MongooseBlogModelApi.findByIdAndUpdate(// ID almak
-            request.params.id, request.body, {new: true}); //end update
+router.put(
+  "/:id",
+  protect,
+  catchAsync(async (request, response) => {
+    const { id } = request.params;
+    const role = request.user.role;
+    const { header, content, tags } = request.body;
+    if (!header || !content || !tags) {
+      return response.status(400).json({
+        message: "Lütfen tüm alanları doldurunuz!",
+      });
+    }
+    const blog = await MongooseBlogModelApi.findById(id);
+    if (!blog) {
+      return response.status(404).json({
+        message: "Blog bulunamadı!",
+      });
+    }
+    if (role !== "admin" && blog.author !== request.user.username) {
+      return response.status(403).json({
+        message: "Bu işlemi yapmaya yetkiniz yok!",
+      });
+    }
 
-        // Dönüş değeri
-        response.status(200).json(update);
+    const newBlog = await blog.updateOne({
+      header,
+      content,
+      tags,
+    });
 
-        // Güncelleme başarılı
-        console.log("Güncelleme Başarılı");
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Güncelleme Sırasında Hata Meydana geldi");
-    } //end catch
-}); //end update => put
+    response.status(200).json({
+      status: "success",
+      message: "Blog başarıyla güncellendi!",
+      data: {
+        blog: newBlog,
+      },
+    });
+  })
+); //end update => put
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // DELETE BLOG
 // DELETE isteği ile mongodb üzerinden id ile sileceğiz.
 // http://localhost:1111/1
 
-router.delete("/:id", async (request, response) => {
-    try {
-        // İlgili ID'i bul
-        const id = request.params.id;
-        console.log(id);
-
-        const deleteFindId = await MongooseBlogModelApi.findByIdAndDelete(id);
-        console.log(deleteFindId);
-
-        // Dönüş değeri
-        response.status(200).json({message: `${id} nolu id silindi`});
-
-        // Listeleme başarılı
-        console.log("Listeleme Başarılı");
-    } catch (err) {
-        handleError(err, response, "MongoDB'de Silme Sırasında Hata Meydana geldi");
-    } //end catch
-}); //end list => get
+router.delete(
+  "/:id",
+  protect,
+  catchAsync(async (request, response) => {
+    const { id } = request.params;
+    const role = request.user.role;
+    const blog = await MongooseBlogModelApi.findById(id);
+    if (!blog) {
+      return response.status(404).json({
+        message: "Blog bulunamadı!",
+      });
+    }
+    if (role !== "admin" && blog.author !== request.user.username) {
+      return response.status(403).json({
+        status: "error",
+        message: "Bu işlemi yapmaya yetkiniz yok!",
+      });
+    }
+    await blog.deleteOne();
+    response.status(204).json({
+      status: "success",
+      message: "Blog başarıyla silindi!",
+    });
+  })
+); //end delete => delete
 
 /////////////////////////////////////////////////////////////
 // EXPORT

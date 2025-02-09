@@ -15,7 +15,7 @@ console.info("server.js Server 1111 portunda ayağa kalktı");
 
 // Express Import
 const express = require("express");
-
+const globalErrorHandler = require("../controllers/errorController");
 // Mongoose Import
 const mongoose = require("mongoose");
 
@@ -72,11 +72,12 @@ if (process.env.NODE_ENV !== "production") {
 
 // Localhostta MongoDB yüklüyse)
 // Bu proje için docker-compose üzerinden 27017 porta sahip mongodb kurdum
-import dotenv from 'dotenv';
-dotenv.config();
+
+require("dotenv").config();
 // 1.YOL (LOCALHOST)
 // .env dosyasındaki bilgilerden bağlantı URL'si oluşturuluyor
-const databaseLocalUrl = process.env.MONGO_USERNAME && process.env.MONGO_PASSWORD
+const databaseLocalUrl =
+  process.env.MONGO_USERNAME && process.env.MONGO_PASSWORD
     ? `mongodb://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@127.0.0.1:${process.env.MONGO_PORT}/blogDB`
     : "mongodb://blogAdmin:BlogPass123@127.0.0.1:27017/blogDB";
 
@@ -89,16 +90,11 @@ const databaseCloudUrl =
   "mongodb+srv://hamitmizrak:<password>@offlinenodejscluster.l3itd.mongodb.net/?retryWrites=true&w=majority&appName=OfflineNodejsCluster";
 
 // 4.YOL (.dotenv)
-require("dotenv").config();
 // Localhostta MongoDB yüklüyse)
 const databaseCloudUrlDotEnv = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@offlinenodejscluster.l3itd.mongodb.net/?retryWrites=true&w=majority&appName=OfflineNodejsCluster`;
 
 // Local ve Cloud
-const dataUrl = [
-  databaseLocalUrl,
-  databaseCloudUrl,
-  databaseCloudUrlDotEnv,
-];
+const dataUrl = [databaseLocalUrl, databaseCloudUrl, databaseCloudUrlDotEnv];
 
 // Connect
 // 1.YOL
@@ -107,15 +103,26 @@ const dataUrl = [
 // 2.YOL
 //mongoose.connect(`${databaseCloudUrl}`, {useNewUrlParser:true, useUnifiedTopology:true}) // Eski MongoDB sürümleride
 
+let LocalDB = process.env.DATABASE_LOCAL.replace(
+  "<PASSWORD>",
+  process.env.DATABASE_LOCAL_PASSWORD
+);
+LocalDB = LocalDB.replace("<USERNAME>", process.env.DATABASE_LOCAL_USERNAME);
+console.log(LocalDB);
+
+let AtlasDB = process.env.DATABASE_ATLAS.replace(
+  "<PASSWORD>",
+  process.env.DATABASE_ATLAS_PASSWORD
+);
+AtlasDB = AtlasDB.replace("<USERNAME>", process.env.DATABASE_ATLAS_USERNAME);
+console.log(AtlasDB);
+
 mongoose
-  // .connect(`${databaseDockerUrl}`)
-  .connect(`${databaseLocalUrl}`)
-  .then(() => {
-    console.log("Mongo DB Başarıyla Yüklendi");
-  })
-  .catch((err:any) => {
-    console.error("Mongo DB Bağlantı Hatası", err);
-  });
+  .connect(AtlasDB)
+  .then(() => console.log("DB connection succesfull!"))
+  .catch((err) =>
+    console.log("Mongoya bağlanırken bir hata meydana geldi", err)
+  );
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MIDDLEWARE
 // Middleware'leri dahil et
@@ -174,9 +181,9 @@ app.use(morgan("combined")); //dev: uzun ve renkli loglar göster
 // Her 15 dakika içinde en fazla 100 istek atılabilinir.
 const rateLimit = require("express-rate-limit");
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 dakika
-    max: 100, // buy süre zarfında en fazla bu kadar isterk atabilirsiniz.
-    message: "İstek sayısı fazla yapıldı, lütfen biraz sonra tekrar deneyiniz",
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 100, // buy süre zarfında en fazla bu kadar isterk atabilirsiniz.
+  message: "İstek sayısı fazla yapıldı, lütfen biraz sonra tekrar deneyiniz",
 });
 
 app.use("/blog/", limiter);
@@ -225,96 +232,265 @@ Kullanıcı browser üzerinden oturum açtığında ve kimlik doğrulama bilgile
 app.use(express.static(path.join(__dirname, "../public")));
 
 // 📌 Ana Sayfa (`index44.html`) Yönlendirmesi
-app.get("/", (req:any, res:any,) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+app.get("/", (req: any, res: any) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Formu render eden rota ("/")
 // Anasayfaya yönlendir.
-app.get("/blog/api", csrfProtection, (request:any, response:any) => {
-    // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
-    //response.setHeader("Content-Type", "application/json");
-    //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
-    response.setHeader("Content-Type", "text/html");
-    //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
 
-    // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
-    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+app.get("/blog", csrfProtection, (request: any, response: any) => {
+  const token = request.cookies.jwt;
+  if (!token) {
+    return response.redirect("/unauthorized");
+  }
+  // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
+  //response.setHeader("Content-Type", "application/json");
+  //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
+  response.setHeader("Content-Type", "text/html");
+  //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
 
-    // Sitemizi başka sitelerde iframe ile açılmasını engellemek
-    // clickjacking saldırılarına karşı korumayı sağlar
-    response.setHeader("X-Frame-Options", "DENY");
+  // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
-    // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
-    // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
-    response.setHeader("X-XSS-Protection", "1; mode=block");
+  // Sitemizi başka sitelerde iframe ile açılmasını engellemek
+  // clickjacking saldırılarına karşı korumayı sağlar
+  response.setHeader("X-Frame-Options", "DENY");
 
-    // Access Control (CORS Başlıkları)
-    // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
-    response.setHeader("Access-Control-Allow-Origin", "https://example.com");
+  // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
+  // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
+  response.setHeader("X-XSS-Protection", "1; mode=block");
 
-    // Access-Control-Allow-Methods
-    // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
-    response.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    );
+  // Access Control (CORS Başlıkları)
+  // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
+  response.setHeader("Access-Control-Allow-Origin", "*");
 
-    // Access-Control-Allow-Headers
-    // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
-    response.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization"
-    );
+  // Access-Control-Allow-Methods
+  // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
 
-    // dist/server.js
-    response.render("blog", { csrfToken: request.csrfToken() });
+  // Access-Control-Allow-Headers
+  // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // dist/server.js
+  response.render("blog", { csrfToken: request.csrfToken() });
+});
+
+app.get("/manageUsers", csrfProtection, (request: any, response: any) => {
+  const token = request.cookies.jwt;
+  if (!token) {
+    return response.redirect("/unauthorized");
+  }
+  // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
+  //response.setHeader("Content-Type", "application/json");
+  //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
+  response.setHeader("Content-Type", "text/html");
+  //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
+
+  // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  // Sitemizi başka sitelerde iframe ile açılmasını engellemek
+  // clickjacking saldırılarına karşı korumayı sağlar
+  response.setHeader("X-Frame-Options", "DENY");
+
+  // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
+  // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
+  response.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // Access Control (CORS Başlıkları)
+  // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
+  response.setHeader("Access-Control-Allow-Origin", "*");
+
+  // Access-Control-Allow-Methods
+  // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  // Access-Control-Allow-Headers
+  // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // dist/server.js
+  response.render("manageUsers", { csrfToken: request.csrfToken() });
+});
+
+app.get("/register", csrfProtection, (request, response) => {
+  // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
+  //response.setHeader("Content-Type", "application/json");
+  //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
+  response.setHeader("Content-Type", "text/html");
+  //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
+
+  // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  // Sitemizi başka sitelerde iframe ile açılmasını engellemek
+  // clickjacking saldırılarına karşı korumayı sağlar
+  response.setHeader("X-Frame-Options", "DENY");
+
+  // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
+  // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
+  response.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // Access Control (CORS Başlıkları)
+  // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
+  response.setHeader("Access-Control-Allow-Origin", "https://example.com");
+
+  // Access-Control-Allow-Methods
+  // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  // Access-Control-Allow-Headers
+  // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // dist/server.js
+  response.render("register", { csrfToken: request.csrfToken() });
+});
+
+app.get("/login", csrfProtection, (request, response) => {
+  // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
+  //response.setHeader("Content-Type", "application/json");
+  //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
+  response.setHeader("Content-Type", "text/html");
+  //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
+
+  // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  // Sitemizi başka sitelerde iframe ile açılmasını engellemek
+  // clickjacking saldırılarına karşı korumayı sağlar
+  response.setHeader("X-Frame-Options", "DENY");
+
+  // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
+  // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
+  response.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // Access Control (CORS Başlıkları)
+  // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
+  response.setHeader("Access-Control-Allow-Origin", "https://example.com");
+
+  // Access-Control-Allow-Methods
+  // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  // Access-Control-Allow-Headers
+  // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // dist/server.js
+  response.render("login", { csrfToken: request.csrfToken() });
+});
+
+app.get("/unauthorized", csrfProtection, (request, response) => {
+  // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
+  //response.setHeader("Content-Type", "application/json");
+  //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
+  response.setHeader("Content-Type", "text/html");
+  //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
+
+  // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  // Sitemizi başka sitelerde iframe ile açılmasını engellemek
+  // clickjacking saldırılarına karşı korumayı sağlar
+  response.setHeader("X-Frame-Options", "DENY");
+
+  // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
+  // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
+  response.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // Access Control (CORS Başlıkları)
+  // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
+  response.setHeader("Access-Control-Allow-Origin", "https://example.com");
+
+  // Access-Control-Allow-Methods
+  // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  // Access-Control-Allow-Headers
+  // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // dist/server.js
+  response.render("unauthorized", { csrfToken: request.csrfToken() });
 });
 
 // Form verilerini işleyen rota
 // DİKKATT: Eğer  blog_api_routes.js post kısmında event.preventDefault(); kapatırsam buraki kodlar çalışır.
 // blog için CSRF koruması eklenmiş POST işlemi
 // app.post("/blog", csrfProtection, (request, response) => {
-app.post("/blog/api", csrfProtection, (request:any, response:any) => {
-    const blogData = {
-        header: request.body.header,
-        content: request.body.content,
-        author: request.body.author,
-        tags: request.body.tags,
-    };
 
-    if (!blogData.header || !blogData.content) {
-        return response.status(400).send("Blog verisi eksik!");
-    }
+// app.post("/api/v1/blog", csrfProtection, (request: any, response: any) => {
+//   const blogData = {
+//     header: request.body.header,
+//     content: request.body.content,
+//     author: request.body.author,
+//     tags: request.body.tags,
+//   };
 
-    if (!request.body) {
-        console.log("Boş gövde alındı.");
-        logger.info("Boş gövde alındı."); //logger: Winston
-    } else {
-        console.log(request.body);
-        console.log("Dolu gövde alındı.");
+//   if (!blogData.header || !blogData.content) {
+//     return response.status(400).send("Blog verisi eksik!");
+//   }
 
-        logger.info(request.body); //logger: Winston
-        logger.info("Dolu gövde alındı."); //logger: Winston
-    }
+//   if (!request.body) {
+//     console.log("Boş gövde alındı.");
+//     logger.info("Boş gövde alındı."); //logger: Winston
+//   } else {
+//     console.log(request.body);
+//     console.log("Dolu gövde alındı.");
 
-    const BlogModel = require("./models/mongoose_blog_models"); // Modeli ekleyin
+//     logger.info(request.body); //logger: Winston
+//     logger.info("Dolu gövde alındı."); //logger: Winston
+//   }
 
-    const newBlog = new BlogModel(blogData);
-    newBlog
-        .save()
-        .then(() => {
-            console.log("Blog başarıyla kaydedildi:", blogData);
-            logger.info("Blog başarıyla kaydedildi:", blogData); //logger: Winston
-            response.send("CSRF ile blog başarıyla kaydedildi.");
-        })
-        .catch((err:any) => {
-            console.log("Veritabanı hatası:", err);
-            logger.error("Veritabanı hatası:", err); //logger: Winston
-            response.status(500).send("Veritabanı hatası oluştu.");
-        });
-});
+//   const BlogModel = require("../models/mongoose_blog_models"); // Modeli ekleyin
 
+//   const newBlog = new BlogModel(blogData);
+//   newBlog
+//     .save()
+//     .then(() => {
+//       console.log("Blog başarıyla kaydedildi:", blogData);
+//       logger.info("Blog başarıyla kaydedildi:", blogData); //logger: Winston
+//       response.send("CSRF ile blog başarıyla kaydedildi.");
+//     })
+//     .catch((err: any) => {
+//       console.log("Veritabanı hatası:", err);
+//       logger.error("Veritabanı hatası:", err); //logger: Winston
+//       response.status(500).send("Veritabanı hatası oluştu.");
+//     });
+// });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -326,15 +502,17 @@ app.set("view engine", "ejs");
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Router (Rotalar)
 const blogRoutes = require("../routes/blog_api_routes");
+const userRoutes = require("../routes/userRoutes");
 const { request } = require("http");
-
+console.log(process.env.NODE_ENV);
 // http://localhost:1111/blog
-app.use("/blog/", blogRoutes);
-
+app.use("/api/v1/blog", blogRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use(globalErrorHandler);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 404 Hata sayfası
-app.use((request:any, response:any, next:any) => {
+app.use((request: any, response: any, next: any) => {
   response.status(404).render("404", { url: request.originalUrl });
 });
 

@@ -1,15 +1,8 @@
-<!--
-EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi verileri html içinde göstermek)
--->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>😂😂 Register.ejs</title>
-    <!-- for language  -->
+    <title>Register</title>
     <meta charset="utf-8" />
-
-    <!-- Responsive Design -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
@@ -23,7 +16,7 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
       crossorigin="anonymous"
     />
 
-    <!-- Font Awesome  -->
+    <!-- Font Awesome -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -32,24 +25,21 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
       referrerpolicy="no-referrer"
     />
 
-    <!-- External css -->
-    <!-- NOT: `/css/blog.css` için  public dizininde olması gerekiyor -->
+    <!-- External CSS -->
     <link rel="stylesheet" href="/css/style.css" />
   </head>
 
   <body class="container">
-    <!-- start codes -->
-
     <div
       class="container d-flex justify-content-center align-items-center vh-100"
     >
       <div class="card p-4 shadow-lg" style="width: 400px">
-        <h2 class="text-center mb-4">Kayıt Ol</h2>
+        <h2 class="text-center mb-4">Giriş Yap</h2>
         <form
-          id="register-form"
+          id="login-form"
           method="POST"
           class="was-validated"
-          action="/register"
+          action="/login"
           novalidate
         >
           <input
@@ -58,6 +48,7 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
             id="_csrf"
             value="<%= csrfToken %>"
           />
+
           <div class="mb-3">
             <label for="username" class="form-label">Kullanıcı Adı</label>
             <input
@@ -67,22 +58,8 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
               name="username"
               required
             />
-            <div class="valid-feedback">Geçerli!</div>
-            <div class="invalid-feedback">Kullanıcı adı boş bırakılamaz.</div>
           </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input
-              type="email"
-              class="form-control"
-              id="email"
-              name="email"
-              pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
-              required
-            />
-            <div class="valid-feedback">Geçerli!</div>
-            <div class="invalid-feedback">E-posta kısmı boş bırakılamaz.</div>
-          </div>
+
           <div class="mb-3">
             <label for="password" class="form-label">Şifre</label>
             <input
@@ -92,29 +69,9 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
               name="password"
               required
             />
-            <div class="valid-feedback">Geçerli!</div>
-            <div class="invalid-feedback">
-              Şifre doğrulama kısmı boş bırakılamaz.
-            </div>
           </div>
 
-          <div class="mb-3">
-            <label for="confirmPassword" class="form-label">Şifre Tekrar</label>
-            <input
-              type="password"
-              class="form-control"
-              id="confirmPassword"
-              name="confirmPassword"
-              required
-            />
-
-            <div class="valid-feedback">Geçerli!</div>
-            <div class="invalid-feedback">
-              Şifre doğrulama kısmı boş bırakılamaz.
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary w-100">Kayıt Ol</button>
+          <button type="submit" class="btn btn-primary w-100">Giriş Yap</button>
         </form>
 
         <!-- Success Toast -->
@@ -162,10 +119,6 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
             </div>
           </div>
         </div>
-        <hr />
-        <h2 class="text-primary">Register</h2>
-
-        <!-- end codes -->
       </div>
     </div>
 
@@ -175,7 +128,6 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
       integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
       crossorigin="anonymous"
     ></script>
-
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
       integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
@@ -185,8 +137,7 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- external js -->
-    <!-- NOT: `/public/js/styles.js` için  public dizininde olması gerekiyor -->
-    <script src="/js/register.js"></script>
+    <!-- External JS -->
+    <script src="/js/login.js"></script>
   </body>
 </html>

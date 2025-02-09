@@ -5,7 +5,7 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>😂😂 Blog.ejs </title>
+    <title>😂😂 Blog.ejs</title>
     <!-- for language  -->
     <meta charset="utf-8" />
 
@@ -39,6 +39,71 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
 
   <body class="container">
     <!-- start codes -->
+    <!-- Düzenleme Modalı -->
+    <div
+      class="modal fade"
+      id="editModal"
+      tabindex="-1"
+      aria-labelledby="editModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="modal-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editModalLabel">Blog Düzenle</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Kapat"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="modal-header" class="form-label">Başlık</label>
+                <input type="text" class="form-control" id="modal-header" />
+              </div>
+              <div class="mb-3">
+                <label for="modal-content" class="form-label">İçerik</label>
+                <textarea
+                  class="form-control"
+                  id="modal-content"
+                  rows="5"
+                ></textarea>
+                <small id="char-count" class="text-success"
+                  >Kalan Harf Sayısı: 2000</small
+                >
+              </div>
+              <div class="mb-3">
+                <label for="modal-author" class="form-label">Yazar</label>
+                <input
+                  type="text"
+                  class="form-control text-muted bg-light"
+                  id="modal-author"
+                  disabled
+                  readonly
+                />
+              </div>
+              <div class="mb-3">
+                <label for="modal-tags" class="form-label">Etiketler</label>
+                <input type="text" class="form-control" id="modal-tags" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                İptal
+              </button>
+              <button type="submit" class="btn btn-primary">Güncelle</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <h1 class="text-center text-uppercase text-primary">Blog Sayfası</h1>
     <p><%= csrfToken %></p>
@@ -47,73 +112,104 @@ EJS(Embedded JavaScript  bunu node.js kullandığımızda mongodb, api gibi veri
     <!-- <form id="blog-form"> -->
     <!-- CSRF (Cross-Site Request Forgery):  action,POST için eklendi -->
     <!-- blog için express router(yönlendirmesini yapacağım bunun için server.ts gelen verilerden kullanacağım) -->
-
-    <form action="/blog" method="POST" id="blog-form">
-      <!-- Dikkat: Eğer bunu yazmazsanız hata alırsınız. CSRF (Cross-Site Request Forgery) -->
+    <form
+      id="blog-form"
+      method="POST"
+      class="was-validated"
+      action="/blog"
+      novalidate
+    >
       <input type="hidden" name="_csrf" id="_csrf" value="<%= csrfToken %>" />
 
-      <!-- BLOG HEADER -->
-      <div class="form-group mb-3">
-        <span for="header">Header</span>
-        <!-- required kaldırdım -->
-        <input
-          type="text"
-          id="header"
-          name="header"
-          class="form-control"
-          placeholder="blog başlığı"
-          autofocus
-        />
+      <div class="mb-3">
+        <label for="header" class="form-label">Başlık</label>
+        <input type="text" class="form-control" id="header" required />
+        <div class="valid-feedback">Geçerli!</div>
+        <div class="invalid-feedback">Başlık boş bırakılamaz.</div>
       </div>
 
-      <!-- BLOG CONTENT -->
-      <div class="form-group mb-3">
-        <span for="content" class="form-label">Content</span>
-        <!-- required kaldırdım -->
+      <div class="mb-3">
+        <label for="content" class="form-label">İçerik</label>
         <textarea
           class="form-control"
-          name="content"
           id="content"
-          placeholder="blog içeriği"
           rows="5"
+          required
+          maxlength="2000"
         ></textarea>
+        <div class="valid-feedback">Geçerli!</div>
+        <div class="invalid-feedback">İçerik boş bırakılamaz.</div>
       </div>
-      <small id="char-count" class="text-success">Kalan Harf Sayısı: 2000</small>
 
-
-      <!-- BLOG AUTHOR -->
-      <div class="form-group mb-3">
-        <span for="author">Author</span>
-        <!-- required kaldırdım -->
+      <div class="mb-3">
+        <label for="imageUrl" class="form-label">Resim Url</label>
         <input
           type="text"
-          id="author"
-          name="author"
-          class="form-control"
-          placeholder="blog yazarı"
+          class="form-control text-muted bg-light"
+          id="imageUrl"
         />
       </div>
 
-      <!-- BLOG TAGS -->
-      <div class="form-group mb-3">
-        <span for="tags">Tags</span>
-        <!-- required kaldırdım -->
-        <input
-          type="text"
-          id="tags"
-          name="tags"
-          class="form-control"
-          placeholder="blog yazarı"
-        />
+      <div class="mb-3">
+        <label for="tags" class="form-label">Etiketler</label>
+        <input type="text" class="form-control" id="tags" required />
+        <div class="valid-feedback">Geçerli!</div>
+        <div class="invalid-feedback">Etiketler boş bırakılamaz.</div>
       </div>
-
-      <!-- BLOG BUTTON -->
       <div class="form-group mb-3">
         <input type="reset" value="Temizle" class="btn btn-danger" />
         <button type="submit" class="btn btn-primary">Gönder</button>
       </div>
     </form>
 
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+      <button class="btn btn-danger" id="logoutBtn">Çıkış Yap</button>
+    </div>
+
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+      <div
+        id="successToast"
+        class="toast align-items-center text-white bg-success border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="toast-success-blog">
+            Blog başarıyla eklendi!
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+      <div
+        id="errorToast"
+        class="toast align-items-center text-white bg-danger border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="toast-error-blog">
+            Bloglar getirilirken hata meydana geldi!
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    </div>
     <hr />
     <h2 class="text-primary">Blog</h2>
     <!-- table.table.table-hover.table-striped>thead>tr>(th{id})*5 -->

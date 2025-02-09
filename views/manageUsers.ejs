@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kullanıcı Yönetimi</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome (Iconlar için) -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2 class="text-center mb-4">Kullanıcılar</h2>
+
+      <!-- Kullanıcıları Listeleyen Tablo -->
+      <table class="table table-striped" id="user-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Kullanıcı Adı</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Kullanıcılar API'den yüklenecek -->
+        </tbody>
+      </table>
+
+      <!-- Kullanıcı Ekleme Butonu -->
+      <button
+        class="btn btn-success mb-4"
+        data-bs-toggle="modal"
+        data-bs-target="#addModal"
+      >
+        Kullanıcı Ekle
+      </button>
+
+      <!-- Kullanıcı Düzenleme Modal -->
+      <div
+        class="modal fade"
+        id="editModal"
+        tabindex="-1"
+        aria-labelledby="editModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editModalLabel">Kullanıcı Düzenle</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <form id="edit-user-form">
+                <div class="mb-3">
+                  <label for="edit-username" class="form-label"
+                    >Kullanıcı Adı</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="edit-username"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="edit-email" class="form-label">Email</label>
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="edit-email"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="edit-role" class="form-label">Rol</label>
+                  <select class="form-control" id="edit-role" required>
+                    <option value="admin">Admin</option>
+                    <option value="user">Kullanıcı</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Kapat
+              </button>
+              <button type="button" class="btn btn-primary" id="edit-user-btn">
+                Güncelle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kullanıcı Ekle Modal -->
+      <div
+        class="modal fade"
+        id="addModal"
+        tabindex="-1"
+        aria-labelledby="addModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addModalLabel">
+                Yeni Kullanıcı Ekle
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <form id="add-user-form">
+                <div class="mb-3">
+                  <label for="add-username" class="form-label"
+                    >Kullanıcı Adı</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="add-username"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="add-email" class="form-label">Email</label>
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="add-email"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="add-password" class="form-label">Şifre</label>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="add-password"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="add-passwordConfirm" class="form-label"
+                    >Şifre Onayı</label
+                  >
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="add-passwordConfirm"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="add-role" class="form-label">Rol</label>
+                  <select class="form-control" id="add-role" required>
+                    <option value="admin">Admin</option>
+                    <option value="user">Kullanıcı</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Kapat
+              </button>
+              <button type="button" class="btn btn-primary" id="add-user-btn">
+                Ekle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Bildirimleri -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div
+        id="liveToast"
+        class="toast align-items-center text-white bg-success border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS ve bağımlılıkları -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        const toastEl = document.getElementById("liveToast");
+        const toastBody = toastEl.querySelector(".toast-body");
+        const toast = new bootstrap.Toast(toastEl);
+
+        function showToast(message, type = "success") {
+          toastEl.classList.remove("bg-success", "bg-danger");
+          toastEl.classList.add(
+            type === "success" ? "bg-success" : "bg-danger"
+          );
+          toastBody.textContent = message;
+          toast.show();
+        }
+
+        // API üzerinden kullanıcıları listele
+        function loadUsers() {
+          $.get("/api/v1/users", function (data) {
+            const tableBody = $("#user-table tbody");
+            tableBody.empty();
+            const users = data.data.users;
+            users.forEach((user, index) => {
+              const row = `
+                <tr data-id="${user._id}">
+                  <td>${index + 1}</td>
+                  <td>${user.username}</td>
+                  <td>${user.email}</td>
+                  <td>${user.role}</td>
+                  <td>
+                    <button class="btn btn-warning btn-sm edit-btn" data-bs-toggle="modal" data-bs-target="#editModal">
+                      <i class="fa fa-edit"></i> Düzenle
+                    </button>
+                    <button class="btn btn-danger btn-sm delete-btn">
+                      <i class="fa fa-trash"></i> Sil
+                    </button>
+                  </td>
+                </tr>`;
+              tableBody.append(row);
+            });
+          });
+        }
+
+        // Kullanıcı ekleme
+        $("#add-user-btn").on("click", function () {
+          const username = $("#add-username").val();
+          const email = $("#add-email").val();
+          const password = $("#add-password").val();
+          const passwordConfirm = $("#add-passwordConfirm").val();
+          const role = $("#add-role").val();
+
+          if (username && email && role && password && passwordConfirm) {
+            $.ajax({
+              url: "/api/v1/users/createUser",
+              type: "POST",
+              contentType: "application/json",
+              data: JSON.stringify({
+                username,
+                email,
+                role,
+                password,
+                passwordConfirm,
+              }),
+              success: function (response) {
+                loadUsers();
+                $("#add-user-form")[0].reset();
+                $("#addModal").modal("hide");
+
+                // Başarılı işlem için toast mesajı
+                showToast(
+                  response.message || "Kullanıcı başarıyla eklendi.",
+                  "success"
+                );
+              },
+              error: function (xhr) {
+                const errorMessage =
+                  (xhr.responseJSON && xhr.responseJSON.message) ||
+                  "Kullanıcı eklenirken bir hata oluştu.";
+
+                // Hata durumunda toast mesajı
+                showToast(errorMessage, "danger");
+              },
+            });
+          } else {
+            showToast("Tüm alanları doldurduğunuzdan emin olun.", "danger");
+          }
+        });
+
+        // Kullanıcı silme
+        $(document).on("click", ".delete-btn", function () {
+          const userId = $(this).closest("tr").data("id");
+          if (
+            userId &&
+            confirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?")
+          ) {
+            $.ajax({
+              url: `/api/v1/users/${userId}`,
+              type: "DELETE",
+              success: function () {
+                loadUsers();
+                showToast("Kullanıcı başarıyla silindi.");
+              },
+              error: function (xhr, status, error) {
+                showToast(
+                  "Kullanıcı silinirken bir hata oluştu: " + error,
+                  "danger"
+                );
+              },
+            });
+          }
+        });
+
+        // Kullanıcı düzenleme bilgilerini yükleme
+        $(document).on("click", ".edit-btn", function () {
+          const userId = $(this).closest("tr").data("id");
+          if (userId) {
+            $.get(`/api/v1/users/${userId}`)
+              .done(function (data) {
+                const user = data.data.user;
+                $("#edit-username").val(user.username);
+                $("#edit-email").val(user.email);
+                $("#edit-role").val(user.role);
+                $("#edit-user-btn").data("id", userId);
+                $("#editModal").modal("show");
+              })
+              .fail(function () {
+                showToast("Kullanıcı bilgileri alınamadı.", "danger");
+              });
+          }
+        });
+
+        // Kullanıcıyı güncelleme
+        $("#edit-user-btn").on("click", function () {
+          const userId = $(this).data("id");
+          const username = $("#edit-username").val();
+          const email = $("#edit-email").val();
+          const role = $("#edit-role").val();
+
+          if (username && email && role) {
+            $.ajax({
+              url: `/api/v1/users/${userId}`,
+              type: "PUT",
+              contentType: "application/json",
+              data: JSON.stringify({ username, email, role }),
+              success: function () {
+                loadUsers();
+                $("#editModal").modal("hide");
+                showToast("Kullanıcı başarıyla güncellendi.");
+              },
+              error: function (xhr, status, error) {
+                showToast(
+                  "Kullanıcı güncellenirken bir hata oluştu: " +
+                    xhr.responseJSON.message,
+                  "danger"
+                );
+              },
+            });
+          } else {
+            showToast("Tüm alanları doldurduğunuzdan emin olun.", "danger");
+          }
+        });
+
+        // Sayfa yüklendiğinde kullanıcıları getir
+        loadUsers();
+      });
+    </script>
+  </body>
+</html>
