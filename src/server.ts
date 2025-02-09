@@ -103,22 +103,20 @@ const dataUrl = [databaseLocalUrl, databaseCloudUrl, databaseCloudUrlDotEnv];
 // 2.YOL
 //mongoose.connect(`${databaseCloudUrl}`, {useNewUrlParser:true, useUnifiedTopology:true}) // Eski MongoDB sürümleride
 
-let LocalDB = process.env.DATABASE_LOCAL.replace(
+let DockerDB = process.env.DATABASE_DOCKER.replace(
   "<PASSWORD>",
-  process.env.DATABASE_LOCAL_PASSWORD
+  process.env.DATABASE_DOCKER_PASSWORD
 );
-LocalDB = LocalDB.replace("<USERNAME>", process.env.DATABASE_LOCAL_USERNAME);
-console.log(LocalDB);
+DockerDB = DockerDB.replace("<USERNAME>", process.env.DATABASE_DOCKER_USERNAME);
 
 let AtlasDB = process.env.DATABASE_ATLAS.replace(
   "<PASSWORD>",
   process.env.DATABASE_ATLAS_PASSWORD
 );
 AtlasDB = AtlasDB.replace("<USERNAME>", process.env.DATABASE_ATLAS_USERNAME);
-console.log(AtlasDB);
 
 mongoose
-  .connect(AtlasDB)
+  .connect(DockerDB)
   .then(() => console.log("DB connection succesfull!"))
   .catch((err) =>
     console.log("Mongoya bağlanırken bir hata meydana geldi", err)
@@ -328,10 +326,10 @@ app.get("/manageUsers", csrfProtection, (request: any, response: any) => {
 });
 
 app.get("/profile", csrfProtection, (request: any, response: any) => {
-  // const token = request.cookies.jwt;
-  // if (!token) {
-  //   return response.redirect("/unauthorized");
-  // }
+  const token = request.cookies.jwt;
+  if (!token) {
+    return response.redirect("/unauthorized");
+  }
   // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
   //response.setHeader("Content-Type", "application/json");
   //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
@@ -490,51 +488,6 @@ app.get("/unauthorized", csrfProtection, (request, response) => {
   // dist/server.js
   response.render("unauthorized", { csrfToken: request.csrfToken() });
 });
-
-// Form verilerini işleyen rota
-// DİKKATT: Eğer  blog_api_routes.js post kısmında event.preventDefault(); kapatırsam buraki kodlar çalışır.
-// blog için CSRF koruması eklenmiş POST işlemi
-// app.post("/blog", csrfProtection, (request, response) => {
-
-// app.post("/api/v1/blog", csrfProtection, (request: any, response: any) => {
-//   const blogData = {
-//     header: request.body.header,
-//     content: request.body.content,
-//     author: request.body.author,
-//     tags: request.body.tags,
-//   };
-
-//   if (!blogData.header || !blogData.content) {
-//     return response.status(400).send("Blog verisi eksik!");
-//   }
-
-//   if (!request.body) {
-//     console.log("Boş gövde alındı.");
-//     logger.info("Boş gövde alındı."); //logger: Winston
-//   } else {
-//     console.log(request.body);
-//     console.log("Dolu gövde alındı.");
-
-//     logger.info(request.body); //logger: Winston
-//     logger.info("Dolu gövde alındı."); //logger: Winston
-//   }
-
-//   const BlogModel = require("../models/mongoose_blog_models"); // Modeli ekleyin
-
-//   const newBlog = new BlogModel(blogData);
-//   newBlog
-//     .save()
-//     .then(() => {
-//       console.log("Blog başarıyla kaydedildi:", blogData);
-//       logger.info("Blog başarıyla kaydedildi:", blogData); //logger: Winston
-//       response.send("CSRF ile blog başarıyla kaydedildi.");
-//     })
-//     .catch((err: any) => {
-//       console.log("Veritabanı hatası:", err);
-//       logger.error("Veritabanı hatası:", err); //logger: Winston
-//       response.status(500).send("Veritabanı hatası oluştu.");
-//     });
-// });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

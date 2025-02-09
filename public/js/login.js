@@ -1,7 +1,5 @@
 $(document).ready(function () {
-  // Formu Temizleme Functionu
   const reset = () => {
-    // Formu temizlemek için
     $("#login-form")[0].reset();
   };
 

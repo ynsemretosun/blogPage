@@ -49,10 +49,7 @@ const handleError = (err, response, message) => {
 }; //end handleError
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CREATE BLOG
-// POST isteği ile yeni bir blog datası oluşturuyoruz.
-// Gönderilen bu veriyi almak için request.body ile içeri aktarmış olacağız.
-// http://localhost:1111
+
 const { promisify } = require("util");
 const catchAsync = require("../utils/catchAsync");
 const { verify } = require("jsonwebtoken");
@@ -75,9 +72,8 @@ const protect = catchAsync(async (req, res, next) => {
       new AppError("Lütfen giriş yaptıktan sonra tekrar deneyiniz!", 401)
     );
   }
-  //Validate token
   const decoded = await promisify(verify)(token, process.env.JWT_SECRET);
-  //Check user still exist
+
   const currentUser = await User.findById(decoded.id);
   if (!currentUser)
     return next(new AppError("Bu tokene sahip kullanıcı mevcut değil!", 401));
@@ -121,13 +117,11 @@ router.post(
 router.get(
   "/",
   catchAsync(async (req, res) => {
-    //limiter ekle
-
     const blogs = await MongooseBlogModelApi.find({ status: "published" })
       .sort({
         createdAt: -1,
       })
-      .limit(10);
+      .limit(6);
 
     res.status(200).json({
       status: "success",
@@ -144,7 +138,6 @@ router.get(
   protect,
   catchAsync(async (req, res) => {
     const role = req.user.role;
-    console.log(role);
     let blogs = [];
     if (role !== "admin") {
       blogs = await MongooseBlogModelApi.find({ author: req.user.username });
@@ -163,9 +156,7 @@ router.get(
 );
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// UPDATE BLOG
-// PUT isteği ile mongodb üzerinden veri güncelleyeceğiz.
-// NOT: delete ve update işlemlerinde ID kullanılır.
+
 router.put(
   "/:id",
   protect,
@@ -207,9 +198,6 @@ router.put(
 ); //end update => put
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// DELETE BLOG
-// DELETE isteği ile mongodb üzerinden id ile sileceğiz.
-// http://localhost:1111/1
 
 router.delete(
   "/:id",

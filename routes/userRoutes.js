@@ -169,7 +169,8 @@ router.delete(
   "/deleteMe",
   protect,
   catchAsync(async (req, res) => {
-    await User.findByIdAndUpdate(req.user.id);
+    await User.findByIdAndDelete(req.user.id);
+    res.clearCookie("jwt");
     res.status(204).json({
       status: "success",
       message: "Kullanıcı başarıyla silindi!",

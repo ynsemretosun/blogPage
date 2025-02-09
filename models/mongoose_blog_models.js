@@ -59,7 +59,6 @@ const BlogPostSchema = new mongoose.Schema(
     },
     imageUrl: {
       type: String,
-      validate: [validator.isURL, "Lütfen geçerli bir url giriniz!"],
       required: [true, "Profil resmi gereklidir!"],
       default:
         "https://media.istockphoto.com/id/811268074/tr/foto%C4%9Fraf/diz%C3%BCst%C3%BC-bilgisayar-masa%C3%BCst%C3%BC-pc-insan-eli-ofis-yumu%C5%9Fak-odak-resim-vintage-kavram%C4%B1.jpg?s=612x612&w=0&k=20&c=CAPQMxDANwMdIvGYzWrp3frfH0vQ_k0fo5IgFb_Kvxg=",
