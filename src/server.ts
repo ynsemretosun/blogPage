@@ -327,11 +327,11 @@ app.get("/manageUsers", csrfProtection, (request: any, response: any) => {
   response.render("manageUsers", { csrfToken: request.csrfToken() });
 });
 
-app.get("/profile", csrfProtection, (request: any, response: any) => {
-  const token = request.cookies.jwt;
-  if (!token) {
-    return response.redirect("/unauthorized");
-  }
+app.get("/hi", csrfProtection, (request: any, response: any) => {
+  // const token = request.cookies.jwt;
+  // if (!token) {
+  //   return response.redirect("/unauthorized");
+  // }
   // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
   //response.setHeader("Content-Type", "application/json");
   //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak

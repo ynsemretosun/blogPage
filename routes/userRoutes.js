@@ -256,6 +256,7 @@ router.get(
   "/getMe",
   protect,
   catchAsync(async (req, res) => {
+    console.log(req.user.id);
     const user = await User.findById(req.user.id);
     res.status(200).json({
       status: "success",
@@ -271,6 +272,7 @@ router.put(
   protect,
   catchAsync(async (req, res) => {
     const { username, email } = req.body;
+    console.log(username, email);
     if (!username || !email) {
       return res.status(400).json({
         status: "error",
@@ -286,7 +288,6 @@ router.put(
     }
     user.username = username;
     user.email = email;
-    user.password = password;
     await user.save();
     res.status(200).json({
       status: "success",
