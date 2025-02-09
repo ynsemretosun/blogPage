@@ -327,6 +327,50 @@ app.get("/manageUsers", csrfProtection, (request: any, response: any) => {
   response.render("manageUsers", { csrfToken: request.csrfToken() });
 });
 
+app.get("/profile", csrfProtection, (request: any, response: any) => {
+  const token = request.cookies.jwt;
+  if (!token) {
+    return response.redirect("/unauthorized");
+  }
+  // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
+  //response.setHeader("Content-Type", "application/json");
+  //response.setHeader("Content-Type", "text/plain"); // name Hamit surnameMızrak
+  response.setHeader("Content-Type", "text/html");
+  //response.setHeader("Content-Type", "application/x-www-form-urlencoded"); // name=Hamit&surname=Mizrak
+
+  // cache-control: Yanıtları hızlı sunmak için ve sunucya gereksiz istekleri azaltmak için
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  // Sitemizi başka sitelerde iframe ile açılmasını engellemek
+  // clickjacking saldırılarına karşı korumayı sağlar
+  response.setHeader("X-Frame-Options", "DENY");
+
+  // X-XSS-Protection: Tarayıca tarafından XSS(Cross-Site Scripting) saldırılarıa karşı koruma
+  // XSS saldırısını tespit ederse sayfanın yüklenmesini engeller.
+  response.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // Access Control (CORS Başlıkları)
+  // XBaşka bir kaynaktan gelen istekleri kontrol etmet için CORS başlığı ekleyebiliriz.
+  response.setHeader("Access-Control-Allow-Origin", "*");
+
+  // Access-Control-Allow-Methods
+  // Sunucunun hangi HTTP yöntemlerini kabul etiğini gösterir.
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  // Access-Control-Allow-Headers
+  // Bu başlıklar, taryıcınının sunucuya göndereceği özel başlıklar göndersin
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // dist/server.js
+  response.render("profileSettings", { csrfToken: request.csrfToken() });
+});
+
 app.get("/register", csrfProtection, (request, response) => {
   // İstek gövdesinde JSON(Javascript Object Notation) formatında veri göndereceğini belirtir.
   //response.setHeader("Content-Type", "application/json");
