@@ -90,11 +90,121 @@
       <div id="message" class="mt-3"></div>
     </div>
 
+    <!-- Toast Component -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="successToast"
+        class="toast align-items-center text-bg-success border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="toast-success">
+            Profil bilgileri başarıyla değiştirildi!
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+      <div
+        id="errorToast"
+        class="toast align-items-center text-bg-danger border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="toast-error">Hata oluştu!</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    </div>
+
     <!-- Bootstrap JS ve jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Özel JavaScript -->
-    <script src="/scripts/profileSettings.js"></script>
+    <script>
+      $(document).ready(function () {
+        $.ajax({
+          url: "api/v1/users/getMe",
+          type: "GET",
+          success: function (response) {
+            $("#username").val(response.data.user.username);
+            $("#email").val(response.data.user.email);
+          },
+          error: function (xhr, status, error) {
+            $("#toast-error").text(
+              xhr.responseJSON.message ||
+                "Kullanıcı bilgileri getirilirken bir hata oluştu!"
+            );
+            const errorToast = new bootstrap.Toast($("#errorToast"));
+            errorToast.show();
+          },
+        });
+
+        $("#passwordForm").submit(function (e) {
+          e.preventDefault();
+          const password = $("#currentPassword").val();
+          const newPassword = $("#newPassword").val();
+          const newPasswordConfirm = $("#confirmPassword").val();
+          $.ajax({
+            url: "api/v1/users/changePassword",
+            type: "PATCH",
+            data: { password, newPassword, newPasswordConfirm },
+            success: function (response) {
+              $("#toast-success").text(
+                "Giriş işlemi başarılı! Anasayfaya yönlendiriliyorsunuz."
+              );
+              const successToast = new bootstrap.Toast($("#successToast"));
+              successToast.show();
+            },
+            error: function (xhr, status, error) {
+              $("#toast-error").text(
+                xhr.responseJSON.message ||
+                  "Şifre değiştirilirken bir hata oluştu!"
+              );
+              const errorToast = new bootstrap.Toast($("#errorToast"));
+              errorToast.show();
+            },
+          });
+        });
+
+        $("#profileForm").submit(function (e) {
+          e.preventDefault();
+
+          const username = $("#username").val();
+          const email = $("#email").val();
+          $.ajax({
+            url: "api/v1/users/updateMe",
+            type: "PATCH",
+            data: { username, email },
+            success: function (response) {
+              const successToast = new bootstrap.Toast($("#successToast"));
+              successToast.show();
+            },
+            error: function (xhr, status, error) {
+              $("#toast-error").text(
+                xhr.responseJSON.message ||
+                  "Profil bilgileri güncellenirken bir hata oluştu!"
+              );
+              const errorToast = new bootstrap.Toast($("#errorToast")[0]);
+              errorToast.show();
+            },
+          });
+        });
+      });
+    </script>
   </body>
 </html>

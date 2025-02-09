@@ -327,7 +327,7 @@ app.get("/manageUsers", csrfProtection, (request: any, response: any) => {
   response.render("manageUsers", { csrfToken: request.csrfToken() });
 });
 
-app.get("/hi", csrfProtection, (request: any, response: any) => {
+app.get("/profile", csrfProtection, (request: any, response: any) => {
   // const token = request.cookies.jwt;
   // if (!token) {
   //   return response.redirect("/unauthorized");

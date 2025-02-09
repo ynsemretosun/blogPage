@@ -48,16 +48,8 @@ cript >
         url: "api/v1/users/updateMe",
         type: "PUT",
         data: JSON.stringify({ username, email }),
-        success: function (response) {
-          $("#message").html(
-            '<div class="alert alert-success">' + response + "</div>"
-          );
-        },
-        error: function (xhr, status, error) {
-          $("#message").html(
-            '<div class="alert alert-danger">' + xhr.responseText + "</div>"
-          );
-        },
+        success: function (response) {},
+        error: function (xhr, status, error) {},
       });
     });
   });

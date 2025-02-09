@@ -9,7 +9,6 @@ const AppError = require("../utils/appError");
 const { promisify } = require("util");
 const app = express();
 app.use(morgan("combined"));
-
 const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
@@ -18,7 +17,6 @@ const restrictTo = (...roles) => {
     next();
   };
 };
-
 const protect = catchAsync(async (req, res, next) => {
   //Getting token and check its there
   let token;
@@ -78,6 +76,36 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
+router.patch(
+  "/updateMe",
+  protect,
+  catchAsync(async (req, res) => {
+    const { username, email } = req.body;
+    console.log(username, email);
+    if (!username || !email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Lütfen tüm alanları doldurunuz!",
+      });
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "Kullanıcı bulunamadı!",
+      });
+    }
+    await User.findByIdAndUpdate(req.user.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    res.status(200).json({
+      status: "success",
+      message: "Kullanıcı başarıyla güncellendi!",
+    });
+  })
+);
+
 router.post(
   "/register",
   catchAsync(async (req, res, next) => {
@@ -123,15 +151,55 @@ router.get(
 );
 
 router.get(
-  "/me",
+  "/getMe",
   protect,
   catchAsync(async (req, res) => {
+    console.log(req.user.id);
+    const user = await User.findById(req.user.id);
     res.status(200).json({
       status: "success",
       data: {
-        user: req.user,
+        user,
       },
     });
+  })
+);
+
+router.delete(
+  "/deleteMe",
+  protect,
+  catchAsync(async (req, res) => {
+    await User.findByIdAndUpdate(req.user.id);
+    res.status(204).json({
+      status: "success",
+      message: "Kullanıcı başarıyla silindi!",
+    });
+  })
+);
+
+router.patch(
+  "/changePassword",
+  protect,
+  catchAsync(async (req, res) => {
+    const { password, newPassword, newPasswordConfirm } = req.body;
+    if (!password || !newPassword || !newPasswordConfirm) {
+      return res.status(400).json({
+        status: "error",
+        message: "Lütfen tüm alanları doldurunuz!",
+      });
+    }
+    const user = await User.findById(req.user.id).select("+password");
+    if (!(await user.correctPassword(password, user.password))) {
+      return res.status(401).json({
+        status: "error",
+        message: "Eski şifre hatalı!",
+      });
+    }
+    user.password = newPassword;
+    user.passwordConfirm = newPasswordConfirm;
+    await user.save();
+
+    createSendToken(user, 200, res);
   })
 );
 
@@ -251,86 +319,5 @@ router.delete(
     });
   })
 );
-
-router.get(
-  "/getMe",
-  protect,
-  catchAsync(async (req, res) => {
-    console.log(req.user.id);
-    const user = await User.findById(req.user.id);
-    res.status(200).json({
-      status: "success",
-      data: {
-        user,
-      },
-    });
-  })
-);
-
-router.put(
-  "/updateMe",
-  protect,
-  catchAsync(async (req, res) => {
-    const { username, email } = req.body;
-    console.log(username, email);
-    if (!username || !email) {
-      return res.status(400).json({
-        status: "error",
-        message: "Lütfen tüm alanları doldurunuz!",
-      });
-    }
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        status: "error",
-        message: "Kullanıcı bulunamadı!",
-      });
-    }
-    user.username = username;
-    user.email = email;
-    await user.save();
-    res.status(200).json({
-      status: "success",
-      message: "Kullanıcı başarıyla güncellendi!",
-    });
-  })
-);
-
-router.delete(
-  "/deleteMe",
-  protect,
-  catchAsync(async (req, res) => {
-    await User.findByIdAndUpdate(req.user.id);
-    res.status(204).json({
-      status: "success",
-      message: "Kullanıcı başarıyla silindi!",
-    });
-  })
-);
-
-router.changePassword = catchAsync(async (req, res) => {
-  const { password, newPassword, newPasswordConfirm } = req.body;
-  if (!password || !newPassword || !newPasswordConfirm) {
-    return res.status(400).json({
-      status: "error",
-      message: "Lütfen tüm alanları doldurunuz!",
-    });
-  }
-  const user = await User.findById(req.user.id).select("+password");
-  if (!(await user.correctPassword(password, user.password))) {
-    return res.status(401).json({
-      status: "error",
-      message: "Eski şifre hatalı!",
-    });
-  }
-  user.password = newPassword;
-  user.passwordConfirm = newPasswordConfirm;
-  await user.save();
-  res.status(200).json({
-    status: "success",
-    message: "Şifreniz başarıyla güncellendi!",
-  });
-  createSendToken(user, 200, res);
-});
 
 module.exports = router;
